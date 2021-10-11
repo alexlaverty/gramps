@@ -1,0 +1,28 @@
+name: Gramps
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: alexlaverty/gramps
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2 # checkout the repository content to github runner
+         
+      - name: Build Gramps Narrated Website
+        run: |
+          # Workaround for bug in database name in Gramps generic.py
+          sed -i 's/name.txt/database.txt/g' /usr/lib/python3/dist-packages/gramps/gen/db/generic.py
+          gramps -i gramps.ged -a report -p name=navwebpage,target=./
+
+      - name: commit
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add -A
+          git commit -m "Genealogy Update" -a
+          
+      - name: push
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: main
